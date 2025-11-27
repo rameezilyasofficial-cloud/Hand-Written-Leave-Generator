@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sick Leave Generator</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#2e2e2e">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Caveat&family=Coming+Soon&family=Gochi+Hand&family=Handlee&family=Indie+Flower&family=Kalam:wght@400;700&family=Nothing+You+Could+Do&family=Patrick+Hand&family=Schoolbell&family=Shadows+Into+Light&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #2e2e2e;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        h1 { margin-bottom: 20px; text-align: center; }
+
+        .main-container {
+            display: flex;
+            flex-direction: row; 
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* Form Section */
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: #3e3e3e;
+            padding: 20px;
+            border-radius: 12px;
+            height: fit-content;
+            order: 1; 
+        }
+
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; color: #ccc; font-size: 0.9em; }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #555;
+            background: #2a2a2a;
+            color: #fff;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        /* Paper Section */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            min-width: 320px;
+            order: 2; 
+        }
+
+        .paper {
+            width: 100%;
+            max-width: 600px;
+            background-color: #fdfbf7; 
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+            background-image: repeating-linear-gradient(transparent, transparent 29px, #7b8bc4 29px, #7b8bc4 30px);
+            line-height: 30px; 
+            color: #1a237e;
+            font-family: 'Kalam', cursive;
+            min-height: 480px; 
+            padding-bottom: 30px;
+            cursor: pointer; 
+        }
+
+        .margin-line {
+            position: absolute;
+            left: 50px;
+            top: 0; bottom: 0; width: 2px;
+            background-color: #e57373;
+            z-index: 10;
+        }
+
+        .content {
+            padding-top: 38px;
+            padding-left: 70px;
+            padding-right: 15px;
+            font-size: 20px; 
+            z-index: 20;
+            position: relative;
+            white-space: pre-wrap;
+        }
+
+        .btn-preview {
+            background-color: #7b8bc4; color: white;
+            border: none; padding: 12px; width: 100%;
+            border-radius: 6px; font-weight: bold; margin-top: 10px;
+            cursor: pointer;
+        }
+
+        /* Install Button - Hidden by default */
+        #installBtn {
+            display: none; /* Only shows if install is available */
+            background-color: #4CAF50; color: white;
+            border: none; padding: 12px; width: 100%;
+            border-radius: 6px; font-weight: bold; margin-top: 10px;
+            cursor: pointer;
+        }
+        
+        /* Screenshot Mode */
+        body.screenshot-mode {
+            background-color: #1a1a1a;
+            padding: 0;
+            justify-content: center; 
+        }
+        body.screenshot-mode .controls, 
+        body.screenshot-mode h1 { display: none !important; }
+        body.screenshot-mode .preview-area { margin-top: 0px; }
+        
+        /* Mobile Layout: Vertical Stack */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            .controls { order: 1; width: 100%; } 
+            .preview-area { order: 2; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sick Leave Generator</h1>
+
+    <div class="main-container">
+        <div class="controls">
+            <div class="input-group">
+                <label>Handwriting Style</label>
+                <select id="fontInput" onchange="updateFont()">
+                    <option value="'Kalam', cursive">Standard Casual</option>
+                    <option value="'Patrick Hand', cursive">Neat Marker</option>
+                    <option value="'Caveat', cursive">Natural Brush</option>
+                    <option value="'Indie Flower', cursive">Bubbly</option>
+                    <option value="'Nothing You Could Do', cursive">Messy/Realistic</option>
+                </select>
+            </div>
+
+            <div class="input-group"><label>College</label><input type="text" id="collegeInput" value="Punjab College, Bahawalpur" oninput="updateLetter()"></div>
+            <div class="input-group"><label>Subject</label><input type="text" id="subjectInput" value="Sick Leave Application." oninput="updateLetter()"></div>
+            <div class="input-group"><label>Name</label><input type="text" id="nameInput" value="Rameez Ahmad" oninput="updateLetter()"></div>
+            <div class="input-group"><label>Class</label><input type="text" id="classInput" value="1st Year" oninput="updateLetter()"></div>
+            <div class="input-group"><label>Roll No</label><input type="text" id="rollInput" value="2527201" oninput="updateLetter()"></div>
+            <div class="input-group"><label>Reason</label><input type="text" id="reasonInput" value="sick since last night" oninput="updateLetter()"></div>
+            <div class="input-group"><label>Date</label><input type="date" id="dateInput" oninput="updateLetter()"></div>
+
+            <button class="btn-preview" onclick="togglePreviewMode()">📷 Preview (Tap paper to return)</button>
+            <button id="installBtn" onclick="installApp()">⬇️ Install App</button>
+            
+            <p style="font-size:0.8em; color:#888; margin-top:10px; text-align:center">Details save automatically for next time!</p>
+        </div>
+
+        <div class="preview-area">
+            <div class="paper" id="paperArea" onclick="handlePaperClick()">
+                <div class="margin-line"></div>
+                <div class="content" style="color:#0023b9;">To,
+The Principal,
+<span id="collegeText">Punjab College, Bahawalpur</span>.
+
+Subject: <span style="text-decoration: underline;" id="subjectText">Sick Leave Application.</span>
+
+Respected Sir,
+    Most respectfully, it is stated that I am a student of <span id="classText">1st Year</span> in your college. I am <span id="reasonText">sick since last night</span>. Due to this, I am unable to attend the college today.
+
+    Kindly grant me leave for today, <span id="longDateText">November 26, 2025</span>. I shall be very thankful to you.
+
+Yours obediently,
+<span id="nameText">Rameez Ahmad</span>
+<span id="classFooterText">1st Year</span> Student
+Roll No: <span id="rollText">2527201</span>
+Dated: <span id="shortDateText">26-11-2025</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const today = new Date();
+        document.getElementById('dateInput').valueAsDate = today;
+
+        // --- Install Logic ---
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI to notify the user they can add to home screen
+            installBtn.style.display = 'block';
+        });
+
+        function installApp() {
+            // Hide the app provided install promotion
+            installBtn.style.display = 'none';
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the A2HS prompt');
+                }
+                deferredPrompt = null;
+            });
+        }
+
+        // --- Load & Save Data ---
+        function loadSavedData() {
+            if(localStorage.getItem('font')) document.getElementById('fontInput').value = localStorage.getItem('font');
+            if(localStorage.getItem('college')) document.getElementById('collegeInput').value = localStorage.getItem('college');
+            if(localStorage.getItem('subject')) document.getElementById('subjectInput').value = localStorage.getItem('subject');
+            if(localStorage.getItem('name')) document.getElementById('nameInput').value = localStorage.getItem('name');
+            if(localStorage.getItem('class')) document.getElementById('classInput').value = localStorage.getItem('class');
+            if(localStorage.getItem('roll')) document.getElementById('rollInput').value = localStorage.getItem('roll');
+            if(localStorage.getItem('reason')) document.getElementById('reasonInput').value = localStorage.getItem('reason');
+        }
+
+        function saveData() {
+            localStorage.setItem('college', document.getElementById('collegeInput').value);
+            localStorage.setItem('subject', document.getElementById('subjectInput').value);
+            localStorage.setItem('name', document.getElementById('nameInput').value);
+            localStorage.setItem('class', document.getElementById('classInput').value);
+            localStorage.setItem('roll', document.getElementById('rollInput').value);
+            localStorage.setItem('reason', document.getElementById('reasonInput').value);
+        }
+
+        function updateLetter() {
+            saveData();
+            const getVal = (id) => document.getElementById(id).value || '_______';
+            
+            document.getElementById('collegeText').innerText = getVal('collegeInput');
+            document.getElementById('subjectText').innerText = getVal('subjectInput');
+            document.getElementById('nameText').innerText = getVal('nameInput');
+            const classVal = getVal('classInput');
+            document.getElementById('classText').innerText = classVal;
+            document.getElementById('classFooterText').innerText = classVal;
+            document.getElementById('rollText').innerText = getVal('rollInput');
+            document.getElementById('reasonText').innerText = getVal('reasonInput');
+
+            let d = new Date(document.getElementById('dateInput').value);
+            if(isNaN(d.getTime())) d = new Date();
+            const userTimezoneOffset = d.getTimezoneOffset() * 60000;
+            const adjustedDate = new Date(d.getTime() + userTimezoneOffset);
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('longDateText').innerText = `${monthNames[adjustedDate.getMonth()]} ${adjustedDate.getDate()}, ${adjustedDate.getFullYear()}`;
+            
+            const dd = String(adjustedDate.getDate()).padStart(2, '0');
+            const mm = String(adjustedDate.getMonth() + 1).padStart(2, '0');
+            document.getElementById('shortDateText').innerText = `${dd}-${mm}-${adjustedDate.getFullYear()}`;
+        }
+
+        function updateFont() {
+            const fontVal = document.getElementById('fontInput').value;
+            document.getElementById('paperArea').style.fontFamily = fontVal;
+            localStorage.setItem('font', fontVal);
+        }
+
+        function togglePreviewMode() {
+            document.body.classList.toggle('screenshot-mode');
+        }
+
+        function handlePaperClick() {
+            if (document.body.classList.contains('screenshot-mode')) {
+                togglePreviewMode();
+            }
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => {
+                console.log('SW registration failed (Normal if not on https/localhost): ', err);
+            });
+        }
+
+        loadSavedData();
+        updateFont();
+        updateLetter();
+    </script>
+</body>
+</html>
