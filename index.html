@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js) - Kept for continuity -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8CVYV1DSH"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -12,7 +12,8 @@
     </script>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- MODIFIED: Removed 'maximum-scale=1.0' and 'user-scalable=no' to allow pinch-to-zoom on mobile devices. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sick Leave Generator</title>
     
     <!-- PWA Settings -->
@@ -22,7 +23,7 @@
     <meta name="theme-color" content="#2e2e2e">
     <meta name="mobile-web-app-capable" content="yes">
     
-    <!-- Fonts -->
+    <!-- Fonts: All 10 handwriting fonts included for variety -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat&family=Coming+Soon&family=Gochi+Hand&family=Handlee&family=Indie+Flower&family=Kalam:wght@400;700&family=Nothing+You+Could+Do&family=Patrick+Hand&family=Schoolbell&family=Shadows+Into+Light&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
@@ -73,7 +74,7 @@
             border-radius: 6px;
             box-sizing: border-box;
         }
-
+        
         /* Paper Section */
         .preview-area {
             flex: 1;
@@ -94,9 +95,12 @@
             line-height: 30px; 
             color: #1a237e;
             font-family: 'Kalam', cursive;
-            min-height: 480px; 
+            min-height: 480px; /* Base min-height for general use */
             padding-bottom: 30px;
             cursor: pointer; 
+            /* Added for smooth scaling */
+            transform-origin: top center;
+            transition: transform 0.2s ease-out;
         }
 
         .margin-line {
@@ -133,21 +137,81 @@
             cursor: pointer;
         }
         
-        /* Screenshot Mode */
+        /* Screenshot Mode Optimization */
         body.screenshot-mode {
             background-color: #1a1a1a;
             padding: 0;
             justify-content: center; 
+            min-height: 100vh; /* Ensure body takes full height */
         }
+        
+        /* HIDE ALL CONTROLS (Form + H1) when in screenshot mode */
         body.screenshot-mode .controls, 
-        body.screenshot-mode h1 { display: none !important; }
-        body.screenshot-mode .preview-area { margin-top: 0px; }
+        body.screenshot-mode h1,
+        body.screenshot-mode .btn-take-screenshot { 
+            display: none !important; 
+        }
+
+        /* NEW: Class to hide the controls section before the final screenshot */
+        body.capture-ready .controls {
+            display: none !important;
+        }
+        
+        body.screenshot-mode .preview-area { 
+            margin-top: 0; 
+            width: 100%; /* Ensure preview area takes full width */
+            padding: 20px 0; /* Add some vertical breathing room */
+        }
+        
+        body.screenshot-mode .paper {
+            box-shadow: none; /* Remove shadow for a cleaner screenshot */
+            max-width: 700px; /* CONSTRAINED MAX WIDTH FOR EASY SCREENSHOTTING */
+            min-height: auto; /* IMPORTANT: Let height be purely content-driven */
+            width: 95%; /* Use most of the available width */
+            margin: 0 auto; /* Center it */
+        }
         
         /* Mobile Layout: Vertical Stack */
         @media (max-width: 768px) {
             .main-container { flex-direction: column; }
             .controls { order: 1; width: 100%; } 
             .preview-area { order: 2; width: 100%; }
+            /* Also ensure screenshot mode is optimized for mobile width */
+            body.screenshot-mode .paper {
+                width: 95%;
+                max-width: 100%;
+            }
+        }
+
+        /* Custom style for the zoom slider */
+        #zoomSlider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #555;
+            outline: none;
+            opacity: 0.9;
+            transition: opacity .2s;
+            border-radius: 5px;
+            margin-top: 8px;
+        }
+
+        #zoomSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #7b8bc4;
+            cursor: pointer;
+        }
+
+        .btn-take-screenshot {
+            background-color: #4CAF50; /* Green color for the capture button */
+            color: white;
+            border: none; padding: 12px; width: 100%;
+            border-radius: 6px; font-weight: bold; margin-top: 10px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -157,26 +221,73 @@
 
     <div class="main-container">
         <div class="controls">
+            <!-- Handwriting Style -->
             <div class="input-group">
-                <label>Handwriting Style</label>
+                <label>Handwriting Style (10 Options)</label>
                 <select id="fontInput" onchange="updateFont()">
-                    <option value="'Kalam', cursive">Standard Casual</option>
-                    <option value="'Patrick Hand', cursive">Neat Marker</option>
-                    <option value="'Caveat', cursive">Natural Brush</option>
-                    <option value="'Indie Flower', cursive">Bubbly</option>
-                    <option value="'Nothing You Could Do', cursive">Messy/Realistic</option>
+                    <option value="'Kalam', cursive">1. Standard Casual (Kalam)</option>
+                    <option value="'Patrick Hand', cursive">2. Neat Marker (Patrick Hand)</option>
+                    <option value="'Caveat', cursive">3. Natural Brush (Caveat)</option>
+                    <option value="'Indie Flower', cursive">4. Bubbly (Indie Flower)</option>
+                    <option value="'Nothing You Could Do', cursive">5. Messy/Realistic (Nothing You Could Do)</option>
+                    <option value="'Schoolbell', cursive">6. Textbook Cursive (Schoolbell)</option>
+                    <option value="'Shadows Into Light', cursive">7. Fine Pen (Shadows Into Light)</option>
+                    <option value="'Coming Soon', cursive">8. Quick Scribble (Coming Soon)</option>
+                    <option value="'Handlee', cursive">9. Smooth Penmanship (Handlee)</option>
+                    <option value="'Gochi Hand', cursive">10. Fun Marker (Gochi Hand)</option>
                 </select>
             </div>
 
-            <div class="input-group"><label>College</label><input type="text" id="collegeInput" value="Punjab College, Bahawalpur" oninput="updateLetter()"></div>
-            <div class="input-group"><label>Subject</label><input type="text" id="subjectInput" value="Sick Leave Application." oninput="updateLetter()"></div>
-            <div class="input-group"><label>Name</label><input type="text" id="nameInput" value="Rameez Ahmad" oninput="updateLetter()"></div>
-            <div class="input-group"><label>Class</label><input type="text" id="classInput" value="1st Year" oninput="updateLetter()"></div>
-            <div class="input-group"><label>Roll No</label><input type="text" id="rollInput" value="2527201" oninput="updateLetter()"></div>
-            <div class="input-group"><label>Reason</label><input type="text" id="reasonInput" value="sick since last night" oninput="updateLetter()"></div>
-            <div class="input-group"><label>Date</label><input type="date" id="dateInput" oninput="updateLetter()"></div>
+            <!-- College Input -->
+            <div class="input-group"><label>🏫 College / Institution (Editable)</label><input type="text" id="collegeInput" value="Punjab College, Bahawalpur" oninput="updateLetter()"></div>
+            
+            <!-- Reason Input -->
+            <div class="input-group">
+                <label>Reason for Leave (10 Common Reasons for Pakistan)</label>
+                <select id="reasonInput" onchange="updateLetter()">
+                    <option value="fever">1. Sick Leave (Fever, Flu, General Illness)</option>
+                    <option value="urgent_work">2. Urgent Piece of Work at Home</option>
+                    <option value="migraine">3. Severe Headache/Migraine</option>
+                    <option value="stomach">4. Stomach Upset (Diarrhea/Gastric Issues)</option>
+                    <option value="viral">5. Contagious Viral Infection (Doctor advised rest)</option>
+                    <option value="injury">6. Minor Injury / Sprain</option>
+                    <option value="appointment">7. Doctor's Urgent Appointment/Consultation</option>
+                    <option value="vomiting">8. Nausea and Vomiting</option>
+                    <option value="family">9. Urgent Family Matter (Death/Sudden Illness)</option>
+                    <option value="travel">10. Urgent Out-of-City Travel (Native Place)</option>
+                </select>
+            </div>
 
-            <button class="btn-preview" onclick="togglePreviewMode()">📷 Preview (Tap paper to return)</button>
+            <!-- Days Input (NEW) -->
+            <div class="input-group">
+                <label>Days of Leave (1, 2, or 3 days only)</label>
+                <select id="daysInput" onchange="updateLetter()">
+                    <option value="1">1 Day</option>
+                    <option value="2">2 Days</option>
+                    <option value="3">3 Days</option>
+                </select>
+            </div>
+            
+            <!-- Start Date Input (Label adjusted) -->
+            <div class="input-group"><label>📅 Start Date (Editable)</label><input type="date" id="dateInput" oninput="updateLetter()"></div>
+
+            <!-- Student Details -->
+            <div class="input-group"><label>👤 Name (Editable)</label><input type="text" id="nameInput" value="Rameez Ahmad" oninput="updateLetter()"></div>
+            <div class="input-group"><label>📚 Class (Editable)</label><input type="text" id="classInput" value="1st Year" oninput="updateLetter()"></div>
+            <div class="input-group"><label>🔢 Roll No (Editable)</label><input type="text" id="rollInput" value="2527201" oninput="updateLetter()"></div>
+
+            <!-- This button toggles the overall screenshot mode -->
+            <button class="btn-preview" onclick="enterScreenshotSetup()">📷 Adjust View (Then Tap Below)</button>
+            
+            <!-- Zoom Controls -->
+            <div class="input-group" id="zoomControls" style="display: none; margin-top: 15px;">
+                <label for="zoomSlider" id="zoomLabel">Zoom: 100%</label>
+                <input type="range" id="zoomSlider" min="50" max="150" value="100" oninput="updateZoom(this.value)">
+            </div>
+            
+            <!-- NEW: Dedicated button to hide controls and finalize the view for capture -->
+            <button class="btn-take-screenshot" id="captureBtn" style="display:none;" onclick="finalizeScreenshot()">🖼️ Ready for Screenshot (Tap paper to exit)</button>
+
             <button id="installBtn" onclick="installApp()">⬇️ Install App</button>
             
             <p style="font-size:0.8em; color:#888; margin-top:10px; text-align:center">Details save automatically for next time!</p>
@@ -185,49 +296,74 @@
         <div class="preview-area">
             <div class="paper" id="paperArea" onclick="handlePaperClick()">
                 <div class="margin-line"></div>
-                <div class="content" style="color:#0023b9;">To,
-The Principal,
-<span id="collegeText">Punjab College, Bahawalpur</span>.
-
-Subject: <span style="text-decoration: underline;" id="subjectText">Sick Leave Application.</span>
-
-Respected Sir,
-    Most respectfully, it is stated that I am a student of <span id="classText">1st Year</span> in your college. I am <span id="reasonText">sick since last night</span>. Due to this, I am unable to attend the college today.
-
-    Kindly grant me leave for today, <span id="longDateText">November 26, 2025</span>. I shall be very thankful to you.
-
-Yours obediently,
-<span id="nameText">Rameez Ahmad</span>
-<span id="classFooterText">1st Year</span> Student
-Roll No: <span id="rollText">2527201</span>
-Dated: <span id="shortDateText">26-11-2025</span></div>
+                <!-- Content will be fully generated by JavaScript -->
+                <div class="content" id="letterContent" style="color:#0023b9;"></div>
             </div>
         </div>
     </div>
 
     <script>
+        // Set today's date as default
         const today = new Date();
         document.getElementById('dateInput').valueAsDate = today;
 
-        // --- Install Logic ---
+        // --- Templates for Dynamic Generation ---
+        const REASON_TEMPLATES = {
+            fever: {
+                subject: "Application for Sick Leave (Fever/Illness)",
+                body: "suffering from a high fever and general illness since yesterday evening"
+            },
+            urgent_work: {
+                subject: "Leave Application for Urgent Piece of Work",
+                body: "urgently required at home to complete an important and unforeseen piece of personal work"
+            },
+            migraine: {
+                subject: "Leave Application due to Severe Headache/Migraine",
+                body: "experiencing a severe migraine headache and require absolute rest"
+            },
+            stomach: {
+                subject: "Leave Request for Stomach Upset (Diarrhea)",
+                body: "suffering from severe stomach upset and continuous bouts of diarrhea"
+            },
+            viral: {
+                subject: "Leave for Contagious Viral Infection",
+                body: "diagnosed with a viral infection and advised by the doctor to take complete rest"
+            },
+            injury: {
+                subject: "Leave Application for Minor Injury / Sprain",
+                body: "unable to move comfortably due to a minor injury/sprain sustained this morning"
+            },
+            appointment: {
+                subject: "Leave for Urgent Doctor's Appointment/Consultation",
+                body: "a pre-scheduled and urgent doctor's consultation today which cannot be postponed"
+            },
+            vomiting: {
+                subject: "Application for Leave due to Nausea and Vomiting",
+                body: "suffering from continuous nausea and vomiting"
+            },
+            family: {
+                subject: "Leave Application for Urgent Family Matter",
+                body: "required to attend to an urgent family matter (e.g., death, sudden illness) which demands immediate presence"
+            },
+            travel: {
+                subject: "Leave Application for Urgent Out-of-City Travel",
+                body: "required to travel urgently out of the city for an important personal matter"
+            }
+        };
+
+        // --- Install Logic (PWA) ---
         let deferredPrompt;
         const installBtn = document.getElementById('installBtn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             deferredPrompt = e;
-            // Update UI to notify the user they can add to home screen
             installBtn.style.display = 'block';
         });
 
         function installApp() {
-            // Hide the app provided install promotion
             installBtn.style.display = 'none';
-            // Show the install prompt
             deferredPrompt.prompt();
-            // Wait for the user to respond to the prompt
             deferredPrompt.userChoice.then((choiceResult) => {
                 if (choiceResult.outcome === 'accepted') {
                     console.log('User accepted the A2HS prompt');
@@ -240,46 +376,98 @@ Dated: <span id="shortDateText">26-11-2025</span></div>
         function loadSavedData() {
             if(localStorage.getItem('font')) document.getElementById('fontInput').value = localStorage.getItem('font');
             if(localStorage.getItem('college')) document.getElementById('collegeInput').value = localStorage.getItem('college');
-            if(localStorage.getItem('subject')) document.getElementById('subjectInput').value = localStorage.getItem('subject');
             if(localStorage.getItem('name')) document.getElementById('nameInput').value = localStorage.getItem('name');
             if(localStorage.getItem('class')) document.getElementById('classInput').value = localStorage.getItem('class');
             if(localStorage.getItem('roll')) document.getElementById('rollInput').value = localStorage.getItem('roll');
-            if(localStorage.getItem('reason')) document.getElementById('reasonInput').value = localStorage.getItem('reason');
+            if(localStorage.getItem('reasonKey')) document.getElementById('reasonInput').value = localStorage.getItem('reasonKey');
+            // NEW: Load Days
+            if(localStorage.getItem('days')) document.getElementById('daysInput').value = localStorage.getItem('days');
         }
 
         function saveData() {
             localStorage.setItem('college', document.getElementById('collegeInput').value);
-            localStorage.setItem('subject', document.getElementById('subjectInput').value);
             localStorage.setItem('name', document.getElementById('nameInput').value);
             localStorage.setItem('class', document.getElementById('classInput').value);
             localStorage.setItem('roll', document.getElementById('rollInput').value);
-            localStorage.setItem('reason', document.getElementById('reasonInput').value);
+            localStorage.setItem('reasonKey', document.getElementById('reasonInput').value); 
+            // NEW: Save Days
+            localStorage.setItem('days', document.getElementById('daysInput').value);
         }
 
         function updateLetter() {
             saveData();
             const getVal = (id) => document.getElementById(id).value || '_______';
             
-            document.getElementById('collegeText').innerText = getVal('collegeInput');
-            document.getElementById('subjectText').innerText = getVal('subjectInput');
-            document.getElementById('nameText').innerText = getVal('nameInput');
+            // 1. Get Values
+            const collegeVal = getVal('collegeInput');
+            const nameVal = getVal('nameInput');
             const classVal = getVal('classInput');
-            document.getElementById('classText').innerText = classVal;
-            document.getElementById('classFooterText').innerText = classVal;
-            document.getElementById('rollText').innerText = getVal('rollInput');
-            document.getElementById('reasonText').innerText = getVal('reasonInput');
+            const rollVal = getVal('rollInput');
+            const reasonKey = getVal('reasonInput');
+            const daysVal = parseInt(getVal('daysInput'), 10);
+            
+            const template = REASON_TEMPLATES[reasonKey] || REASON_TEMPLATES.fever; 
 
+            // 2. Date Calculation (Start Date)
             let d = new Date(document.getElementById('dateInput').value);
             if(isNaN(d.getTime())) d = new Date();
+            
+            // Get user timezone offset and apply to display date
             const userTimezoneOffset = d.getTimezoneOffset() * 60000;
             const adjustedDate = new Date(d.getTime() + userTimezoneOffset);
-            
+
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            document.getElementById('longDateText').innerText = `${monthNames[adjustedDate.getMonth()]} ${adjustedDate.getDate()}, ${adjustedDate.getFullYear()}`;
             
-            const dd = String(adjustedDate.getDate()).padStart(2, '0');
-            const mm = String(adjustedDate.getMonth() + 1).padStart(2, '0');
-            document.getElementById('shortDateText').innerText = `${dd}-${mm}-${adjustedDate.getFullYear()}`;
+            const getFormattedDate = (dateObj) => {
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                const longDate = `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${year}`;
+                const shortDate = `${day}-${month}-${year}`;
+                return { longDate, shortDate };
+            };
+            
+            const startDate = getFormattedDate(adjustedDate);
+            let leaveDurationSentence = '';
+            let unableToAttend = 'attend the college today.';
+            
+            // 3. Determine Leave Duration Sentence
+            if (daysVal === 1) {
+                // 1 Day Leave
+                leaveDurationSentence = `Kindly grant me leave for today, ${startDate.longDate}.`;
+            } else {
+                // Multi-day Leave (2 or 3 days)
+                // Calculate end date based on original date object (d)
+                const endDateObj = new Date(d);
+                // Add (daysVal - 1) to the start date
+                endDateObj.setDate(d.getDate() + daysVal - 1);
+                
+                const endAdjustedDate = new Date(endDateObj.getTime() + userTimezoneOffset);
+                const endDate = getFormattedDate(endAdjustedDate);
+
+                leaveDurationSentence = `Kindly grant me leave for ${daysVal} days, from ${startDate.longDate} to ${endDate.longDate}.`;
+                unableToAttend = 'attend the college during this period.';
+            }
+
+            // 4. Construct the final letter
+            const letterContent = `To,
+The Principal,
+${collegeVal}.
+
+Subject: <span style="text-decoration: underline;">${template.subject}</span>.
+
+Respected Sir,
+    Most respectfully, it is stated that I am a student of ${classVal} in your college. I am ${template.body}. Due to this, I am unable to ${unableToAttend}
+
+    ${leaveDurationSentence} I shall be very thankful to you.
+
+Yours obediently,
+${nameVal}
+${classVal} Student
+Roll No: ${rollVal}
+Dated: ${startDate.shortDate}`;
+
+            document.getElementById('letterContent').innerHTML = letterContent;
         }
 
         function updateFont() {
@@ -287,23 +475,77 @@ Dated: <span id="shortDateText">26-11-2025</span></div>
             document.getElementById('paperArea').style.fontFamily = fontVal;
             localStorage.setItem('font', fontVal);
         }
-
-        function togglePreviewMode() {
-            document.body.classList.toggle('screenshot-mode');
+        
+        // Function to handle zoom changes
+        function updateZoom(value) {
+            const paper = document.getElementById('paperArea');
+            const zoomLevel = value / 100;
+            
+            // Apply CSS transform scale for reliable zooming
+            paper.style.transform = `scale(${zoomLevel})`;
+            
+            // Update label text
+            document.getElementById('zoomLabel').textContent = `Zoom: ${value}%`;
         }
 
+        // NEW: Function to start the screenshot setup (show slider)
+        function enterScreenshotSetup() {
+            // 1. Enter the basic screenshot mode (hides main controls, centers paper)
+            document.body.classList.add('screenshot-mode');
+            
+            // 2. Ensure controls required for setup (Zoom/Capture Button) are visible
+            document.getElementById('zoomControls').style.display = 'block';
+            document.getElementById('captureBtn').style.display = 'block';
+            
+            // 3. Reset zoom and paper transform just in case
+            document.getElementById('zoomSlider').value = 100;
+            updateZoom(100); 
+            
+            // 4. Remove 'capture-ready' class if it was somehow left over
+            document.body.classList.remove('capture-ready');
+        }
+
+        // NEW: Function to finalize the screenshot view (hide all controls)
+        function finalizeScreenshot() {
+            // 1. Hide the remaining controls (zoom and the capture button itself)
+            document.body.classList.add('capture-ready');
+            // The paper is now fully centered and clean for capture.
+            
+            // Note: The click handler on the paper itself will reset the mode.
+        }
+
+        // Original function updated to handle the new capture flow
+        function togglePreviewMode() {
+            // Only used for backwards compatibility or when clicking the paper
+            if (document.body.classList.contains('screenshot-mode')) {
+                // Exit mode
+                document.body.classList.remove('screenshot-mode');
+                document.body.classList.remove('capture-ready');
+                document.getElementById('paperArea').style.transform = ''; // Clear zoom
+                document.getElementById('zoomControls').style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'none';
+            } else {
+                // Enter setup mode
+                enterScreenshotSetup();
+            }
+        }
+
+
         function handlePaperClick() {
+            // Tapping the paper always resets the view to normal
             if (document.body.classList.contains('screenshot-mode')) {
                 togglePreviewMode();
             }
         }
 
+        // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(err => {
                 console.log('SW registration failed (Normal if not on https/localhost): ', err);
             });
         }
 
+        // Initial load and render
         loadSavedData();
         updateFont();
         updateLetter();
